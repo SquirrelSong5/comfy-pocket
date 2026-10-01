@@ -1,0 +1,8 @@
+{
+  "comfy_url": "http://127.0.0.1:8188",
+  "port": 8189,
+  "bind": ["127.0.0.1"],
+  "hosts": ["127.0.0.1", "localhost"],
+  "networks": ["127.0.0.0/8"],
+  "runtime": null
+}
