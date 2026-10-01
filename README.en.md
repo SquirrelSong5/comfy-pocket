@@ -1,25 +1,50 @@
 # Comfy Pocket
 
-**Run your existing ComfyUI apps from a lightweight, mobile-friendly interface.**
+**Keep ComfyUI on your computer. Run your apps from your phone.**
 
 [简体中文](README.md) · [Quick start](#quick-start) · [Phone access](#phone-and-lan-access) · [Compatibility](#compatibility)
 
-Comfy Pocket is an independent Web client for your own ComfyUI backend. It targets people who already build workflows and want to run them comfortably from a phone or another computer, without loading the full node editor.
+Once a workflow is set up, everyday use often comes down to changing a prompt, adding a few images, choosing a size, and waiting for the result. Comfy Pocket puts those controls in a small web interface you can open on your computer or phone. Your own ComfyUI still does the generation.
 
-It does not include models, replace the inference backend, or edit node graphs.
+Save an app in the official ComfyUI interface and choose which inputs to expose. Pocket reads those inputs and builds the form. When you add another app, sync the list; there is no model-specific page to maintain. Workflow editing and model installation stay in ComfyUI.
 
 
 
-## Features
+## A look around
 
-- **Dynamic apps:** discovers saved official `.app.json` files and generates forms from exposed inputs and backend node schemas. New apps do not require frontend code changes.
-- **Mobile execution:** text, numbers, enums, switches, image uploads, queue status, cancellation, history, and downloads.
-- **Optional image groups:** data-driven counts and empty slots when the underlying workflow supports lazy optional branches.
-- **Live progress:** official node/step events; no fabricated whole-job percentage.
-- **Text results:** displays `ui.text`, including actual/enhanced prompts when the workflow exposes them.
-- **Smaller previews:** cached WebP images, at most 1280 px on the longest edge. Original results remain available separately and are never rewritten.
-- **Optional local process controls:** manually start, stop, or restart one shared ComfyUI process from the page.
-- **Private access:** remote access codes, Host/network/Origin checks, and Tailscale-compatible networking.
+These are browser screenshots of the current UI, populated with demo apps, parameters, and results. The landscape is an authored SVG illustration, not a model output or quality benchmark. The demo apps and models are not bundled. The interface currently uses Chinese labels.
+
+### On a computer: controls and results side by side
+
+![Desktop: saved apps on the left, input controls in the center, and the result on the right](docs/screenshots/desktop.png)
+
+Choose a saved app from the sidebar. Its inputs appear in the middle, with the latest result beside them. You can change a prompt or reference image without finding the corresponding node on a canvas each time.
+
+1. **Check ComfyUI at the top.** If you configured local process management, use the start, stop, and restart buttons here. Switching apps uses the same backend process.
+2. **Set the inputs for this run.** Enter a prompt, choose an aspect ratio, or add reference images. Fields marked as advanced live under “更多参数” (More parameters). The controls come from your saved app.
+3. **Click “开始生成” (Generate).** The result area shows the active node and its steps. Model loading may show a status without a percentage. Progress refers to the current node, not an estimate for the whole job.
+4. **Review the preview, then download if you want the original.** “查看原图” (View original) and the download button retrieve the full file. If the workflow exposes text output, you can read and copy it below the image—for example, an enhanced prompt.
+
+“运行记录” (History) opens jobs submitted through Pocket. “同步官方应用” (Sync official apps) refreshes apps after you add or change them in ComfyUI. History does not import every job submitted from other ComfyUI clients.
+
+### On a phone: choose an app, enter inputs, scroll to the result
+
+<p>
+  <img src="docs/screenshots/mobile-create.png" width="320" alt="Phone: app picker, prompt, aspect ratio, and Generate button" />
+  <img src="docs/screenshots/mobile-result.png" width="320" alt="Phone: image preview, original download, and prompt text output" />
+</p>
+
+Open Pocket in your phone's browser; there is no separate mobile app to install. The sidebar becomes an app picker, and results sit below the controls rather than squeezing three columns onto a small screen.
+
+For the first connection, click “手机访问” (Phone access) on the computer, open the displayed address on your phone, and enter the access code. Both devices can use the same LAN or connect through Tailscale. See [phone access setup](#phone-and-lan-access) for the configuration.
+
+After that, the routine is **choose an app → enter a prompt or add images → generate → scroll down to the result**. The clock button at the top opens history. Submitted jobs run on the computer, so switching away from the phone page does not stop generation; return to check their status.
+
+For image editing, choose PNG, JPEG, or WebP files from your phone. An app with an optional image group can accept one image or several, up to the limit defined by its workflow. Whether you can leave every slot empty also depends on the workflow. Convert iPhone HEIC photos before uploading.
+
+Images first load as WebP previews, with a maximum long edge of 1280 px. This saves downloading the full image every time you browse a result. Open or download the original when you need full quality. Video and audio results can play in the page too, depending on the workflow and browser format support.
+
+**Keep the computer awake and Pocket running.** Your phone handles the controls and display; the computer's models and GPU do the work. Prompt enhancement and multi-image editing must already be supported by your workflow—Pocket does not add those capabilities itself.
 
 ## Quick start
 
