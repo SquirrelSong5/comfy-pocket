@@ -19,6 +19,16 @@ Comfy Pocket 连接你自己的 ComfyUI，把已保存的应用变成适合日�
 ![Comfy Pocket desktop](docs/screenshots/desktop.png)
 
 
+## 同步的是什么？
+
+Pocket 同步的是你在 ComfyUI **应用模式（App Mode）** 中创建并保存的应用。
+
+一个应用基于已有的节点工作流：你通过官方 **App Builder** 选出日常要调整的输入（例如提示词、参考图片、尺寸），以及运行后要展示的输出。ComfyUI 将这些输入和输出组织成简洁的操作界面，底层仍由原来的工作流执行。详见 [官方应用模式指南](https://docs.comfy.org/interface/app-mode)。
+
+例如，一个生图工作流可以包含几十个节点，而使用时只显示「提示词、画面比例、生成结果」。哪些参数出现在界面上，由创建应用的人决定。
+
+点击「同步官方应用」时，Pocket 会读取所连接 ComfyUI 中已保存的 `.app.json` 文件及其输入、输出配置，生成自己的操作面板。普通工作流 `.json` 不会被自动转换成应用；请先在官方界面完成构建并保存，再回到 Pocket 同步。
+
 ## 快速开始
 
 已有可用的 **ComfyUI**、**Node.js 22.12+** 和支持 `venv/pip` 的 **Python 3.10+**，就可以运行：
@@ -29,7 +39,7 @@ npx comfy-pocket
 
 按提示填写 ComfyUI 的目录或地址，完成后浏览器会自动打开。首次启动会安装独立的 Python 环境，前端已打包好。
 
-1. 在 ComfyUI 官方界面把工作流保存为应用（`.app.json`），选好需要公开的参数和输出。
+1. 在 ComfyUI 中打开工作流，进入 App Mode，通过 App Builder 选择输入和输出，并保存应用（`.app.json`）。
 2. 在 Pocket 中点击「同步官方应用」。
 3. 选择应用、填写参数，点击「开始生成」。
 

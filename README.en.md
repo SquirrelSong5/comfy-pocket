@@ -19,6 +19,16 @@ Comfy Pocket connects to your own ComfyUI and turns saved apps into forms for ev
 ![Comfy Pocket desktop](docs/screenshots/desktop.png)
 
 
+## What does Pocket sync?
+
+Pocket syncs apps you create and save using ComfyUI's **App Mode**.
+
+An app uses an existing node workflow. In the official **App Builder**, you choose the inputs people should adjust—such as a prompt, reference image, or size—and the outputs they should see. ComfyUI presents those controls and results in a simple interface while the underlying workflow still does the work. See the [official App Mode guide](https://docs.comfy.org/interface/app-mode).
+
+For example, a workflow with dozens of nodes might expose just a prompt, an aspect ratio, and the resulting image. The app's author decides what appears in the interface.
+
+“Sync official apps” reads saved `.app.json` files and their input/output configuration from the connected ComfyUI instance, then builds Pocket's own controls. It does not automatically turn ordinary workflow `.json` files into apps. Build and save the app in ComfyUI first, then sync it in Pocket.
+
 ## Quick start
 
 You need a working **ComfyUI** installation, **Node.js 22.12+**, and **Python 3.10+** with `venv` and `pip`.
@@ -29,7 +39,7 @@ npx comfy-pocket
 
 Enter your ComfyUI directory or URL when prompted. The launcher opens your browser once setup finishes. On first use it installs an isolated Python environment; the frontend is already built.
 
-1. Save a workflow as an app (`.app.json`) in official ComfyUI, choosing the inputs and outputs to expose.
+1. Open a workflow in ComfyUI, enter App Mode, choose inputs and outputs in App Builder, and save the app (`.app.json`).
 2. Click “同步官方应用” (Sync official apps) in Pocket.
 3. Choose an app, set its inputs, and click “开始生成” (Generate).
 
