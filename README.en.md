@@ -19,6 +19,12 @@ Comfy Pocket connects to your own ComfyUI and turns saved apps into forms for ev
 ![Comfy Pocket desktop](docs/screenshots/desktop.png)
 
 
+## Why this project?
+
+ComfyUI already has App Mode and supports mobile access. Pocket started with a practical problem: opening the official interface remotely over Tailscale on a phone involved a long wait, even when all that was needed was to change a prompt, upload an image, and check the result.
+
+Pocket provides a separate, lightweight frontend focused on running apps, reducing the interface resources a phone needs to load. Apps are still built and saved in official ComfyUI, and jobs run on the same ComfyUI backend. This addresses page-loading overhead in that remote-use scenario, not model inference speed. Actual loading times still depend on the network and deployment.
+
 ## What does Pocket sync?
 
 Pocket syncs apps you create and save using ComfyUI's **App Mode**.
