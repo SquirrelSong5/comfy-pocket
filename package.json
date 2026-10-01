@@ -10,6 +10,10 @@
     "node": ">=22.12.0"
   },
   "license": "MIT",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/SquirrelSong5/comfy-pocket.git"
@@ -21,6 +25,7 @@
     "requirements.txt",
     "README.md",
     "README.en.md",
+    "docs/screenshots/*.png",
     "LICENSE",
     "THIRD_PARTY_NOTICES.md",
     "THIRD_PARTY_LICENSES.txt"
