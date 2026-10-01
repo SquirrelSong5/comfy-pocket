@@ -1,0 +1,15 @@
+web/node_modules/
+web/dist/
+state/
+__pycache__/
+*.pyc
+
+
+.dev/
+
+/config.json
+node_modules/
+*.tgz
+.venv/
+.env
+.env.*

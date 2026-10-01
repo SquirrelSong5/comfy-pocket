@@ -1,0 +1,7 @@
+.dev/
+state/
+config.json
+node_modules/
+**/__pycache__/
+*.tgz
+.env*
