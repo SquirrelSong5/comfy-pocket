@@ -111,6 +111,8 @@ The CLI runs in the foreground. Keep its terminal open; `Ctrl+C` stops Pocket, n
 
 ## First run
 
+Once ready, the terminal lists local, LAN, and detected Tailscale IPv4 addresses. An address is marked reachable only when configuration permits it and a local probe succeeds. “Not enabled” needs `bind`, `hosts`, and `networks` configuration followed by a restart; “Not ready” may indicate an unavailable interface or failed listener. Local probes do not verify your phone's network or firewall access. Other VPN addresses in `100.64.0.0/10` are not automatically called Tailscale.
+
 1. Build and test a workflow in official ComfyUI.
 2. Use its app builder to expose the daily inputs and outputs, then save an `.app.json`.
 3. Open Pocket and synchronize official apps. A regular workflow `.json` is not automatically treated as an app.
@@ -118,6 +120,39 @@ The CLI runs in the foreground. Keep its terminal open; `Ctrl+C` stops Pocket, n
 5. View live node progress, text results, and image previews; open/download the original when needed.
 
 A suggested filename is `Model name · Purpose.app.json`. Personal workflows and models are not bundled in this repository.
+
+## Stopping Pocket
+
+Press `Ctrl+C` in the launcher terminal, or use another terminal:
+
+```bash
+npx comfy-pocket stop
+```
+
+For a custom data directory, use the same directory when stopping:
+
+```bash
+npx comfy-pocket stop --home "D:\PocketData"
+```
+
+This stops only the Pocket server for that directory. ComfyUI and jobs already submitted to it keep running. `stop` is available from 0.1.1; stop an older server with `Ctrl+C`, then upgrade and relaunch. Pocket does not install startup entries and stops when the computer shuts down or restarts.
+
+## Optional startup on login
+
+On Windows, you can opt into starting Pocket **after you sign in**:
+
+1. Run Pocket manually once to finish installation and setup.
+2. Press `Win+R`, enter `shell:startup`, and open your user's Startup folder.
+3. Create `Start Comfy Pocket.cmd` there with:
+
+```bat
+@echo off
+call npx --yes comfy-pocket --no-open
+```
+
+Append `--home "D:\PocketData"` if you use a custom directory. At your next Windows login, a terminal starts Pocket without opening a browser or starting ComfyUI. Keep the terminal open; stop Pocket as described above. Delete that file to disable automatic startup.
+
+This runs after the current user signs in, not as a system service before login. Complete first-time setup manually so startup does not wait for configuration prompts or dependency installation.
 
 ## Phone and LAN access
 

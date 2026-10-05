@@ -51,6 +51,16 @@ npx comfy-pocket
 
 下次仍然用同一条命令启动。终端保持打开；退出 Pocket 不会自动停止 ComfyUI。
 
+启动成功后，终端会列出本机、局域网和检测到的 Tailscale 地址，并标注是否已开放。没有配置监听的地址会提示如何启用，不会自动改变网络设置。
+
+关闭时在原终端按 `Ctrl+C`，或在另一个终端运行：
+
+```bash
+npx comfy-pocket stop
+```
+
+默认不会随开机启动，关机后服务就会结束，下次需要重新运行。需要登录 Windows 后自动启动，可按 [开机启动说明](docs/guide.zh-CN.md#开机启动可选) 设置。
+
 <details>
 <summary>镜像源找不到包？</summary>
 

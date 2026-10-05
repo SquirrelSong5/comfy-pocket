@@ -51,6 +51,16 @@ Enter your ComfyUI directory or URL when prompted. The launcher opens your brows
 
 Use the same command next time. Keep the terminal open; exiting Pocket does not stop ComfyUI.
 
+Once ready, the terminal lists local, LAN, and detected Tailscale addresses with their access status. Addresses that are not enabled include configuration guidance; network settings are not changed automatically.
+
+Press `Ctrl+C` in the original terminal, or stop Pocket from another terminal:
+
+```bash
+npx comfy-pocket stop
+```
+
+Pocket does not start automatically after reboot. Run it again when needed, or follow the [Windows login startup instructions](docs/guide.en.md#optional-startup-on-login).
+
 <details>
 <summary>Package not found on your npm mirror?</summary>
 
