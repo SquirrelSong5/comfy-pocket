@@ -7,10 +7,44 @@ import { makeConfig, parseArgs } from '../cli/options.mjs';
 test('parseArgs keeps safe defaults for an existing local ComfyUI', () => {
   const options = parseArgs([]);
 
+  assert.equal(options.command, undefined);
   assert.deepEqual(options.hosts, []);
   assert.equal(options.open, true);
   assert.equal(options.setupOnly, undefined);
   assert.equal(options.help, undefined);
+});
+
+test('parseArgs accepts an explicit start command while keeping it optional', () => {
+  const options = parseArgs(['start', '--no-open']);
+
+  assert.equal(options.command, 'start');
+  assert.equal(options.open, false);
+  assert.deepEqual(parseArgs(['--no-open']).command, undefined);
+});
+
+test('parseArgs accepts stop with only a home directory', () => {
+  const options = parseArgs(['stop', '--home', 'C:\\Users\\me\\.comfy-pocket']);
+
+  assert.equal(options.command, 'stop');
+  assert.equal(options.home, 'C:\\Users\\me\\.comfy-pocket');
+  assert.deepEqual(options.hosts, []);
+});
+
+test('parseArgs rejects server setup options for stop', () => {
+  for (const args of [
+    ['stop', '--python', 'E:\\ExampleEngine\\python.exe'],
+    ['stop', '--comfy-dir', 'E:\\ExampleEngine'],
+    ['stop', '--comfy-url', 'http://127.0.0.1:8188'],
+    ['stop', '--port', '8200'],
+    ['stop', '--host', '192.0.2.10'],
+    ['stop', '--setup-only'],
+  ]) {
+    assert.throws(
+      () => parseArgs(args),
+      /stop only accepts --home, --no-open, and --help/,
+      args.join(' '),
+    );
+  }
 });
 
 test('parseArgs accepts all supported launcher options and repeatable hosts', () => {
