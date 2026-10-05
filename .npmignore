@@ -1,6 +1,7 @@
 .dev/
 state/
 config.json
+pocket-process.json
 node_modules/
 **/__pycache__/
 *.tgz

@@ -272,6 +272,7 @@ async def index(request):
     r=web.FileResponse(ROOT/'web/dist/index.html');r.headers['Cache-Control']='no-cache';return r
 
 async def start():
+    from .service_control import record_server, clear_record
     global CLIENT,RUNTIME
     logging.basicConfig(level=logging.INFO)
     CLIENT=ClientSession(timeout=ClientTimeout(total=90),trust_env=False)
@@ -282,16 +283,19 @@ async def start():
     runner=web.AppRunner(app,access_log=None);await runner.setup()
     progress_task=asyncio.create_task(listen_progress())
     bound=set()
+    process_record=None
     try:
         while True:
             for host in CONF['bind']:
                 if host in bound:continue
                 try:
                     await web.TCPSite(runner,host,CONF['port']).start();bound.add(host)
+                    if host=='127.0.0.1' and process_record is None:process_record=record_server(HOME)
                     logging.info('Listening on %s:%s',host,CONF['port'])
                 except OSError:pass
             await asyncio.sleep(15)
     finally:
+        if process_record is not None:clear_record(HOME,process_record)
         progress_task.cancel()
         await asyncio.gather(progress_task,return_exceptions=True)
         await CLIENT.close();await runner.cleanup()

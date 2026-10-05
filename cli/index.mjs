@@ -6,14 +6,20 @@ import { fileURLToPath } from 'node:url';
 import { spawn,spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { parseArgs,makeConfig } from './options.mjs';
+import { printAccessSummary } from './access.mjs';
 const root=path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const win=process.platform==='win32';
 function run(command,args,opts={}){const r=spawnSync(command,args,{stdio:'inherit',windowsHide:true,...opts});if(r.error||r.status!==0)throw Error(`${command} failed. ${r.error?.message||'See output above.'}`);}
 function openBrowser(url){const command=win?'rundll32':process.platform==='darwin'?'open':'xdg-open';const args=win?['url.dll,FileProtocolHandler',url]:[url];const p=spawn(command,args,{stdio:'ignore',detached:true,windowsHide:true});p.on('error',()=>console.log(`Open ${url} in your browser.`));p.unref();}
 async function main(){
   const o=parseArgs(process.argv.slice(2));
-  if(o.help){console.log(`Comfy Pocket\n\nUsage: comfy-pocket [options]\n  --comfy-url URL   Existing backend (default http://127.0.0.1:8188)\n  --comfy-dir DIR   Local ComfyUI directory; enables process controls\n  --python FILE    Python 3.10+ (ComfyUI Python when using --comfy-dir)\n  --home DIR       Persistent config/data directory (default ~/.comfy-pocket)\n  --host IPv4      Also listen on this LAN/Tailscale address; repeatable\n  --port PORT      Web port (default 8189)\n  --no-open        Do not open a browser\n  --setup-only     Install dependencies and create configuration, then exit\n  --help           Show help\n\n中文：首次启动创建独立 Python 环境，不修改 ComfyUI。配置保存后自动复用。\nKeep this terminal open while using the service. Ctrl+C stops Pocket, not ComfyUI.`);return;}
+  if(o.help){console.log(`Comfy Pocket\n\nUsage: comfy-pocket [start|stop] [options]\n  stop             Stop Pocket only (use --home for a custom data directory)\n  --comfy-url URL   Existing backend (default http://127.0.0.1:8188)\n  --comfy-dir DIR   Local ComfyUI directory; enables process controls\n  --python FILE    Python 3.10+ (ComfyUI Python when using --comfy-dir)\n  --home DIR       Persistent config/data directory (default ~/.comfy-pocket)\n  --host IPv4      Also listen on this LAN/Tailscale address; repeatable\n  --port PORT      Web port (default 8189)\n  --no-open        Do not open a browser\n  --setup-only     Install dependencies and create configuration, then exit\n  --help           Show help\n\n中文：首次启动创建独立 Python 环境，不修改 ComfyUI。配置保存后自动复用。\nKeep this terminal open while using the service. Ctrl+C stops Pocket, not ComfyUI.`);return;}
   const home=path.resolve(o.home||process.env.COMFY_POCKET_HOME||path.join(os.homedir(),'.comfy-pocket'));
+  if(o.command==='stop'){
+    const python=path.join(home,'.venv',win?'Scripts/python.exe':'bin/python');
+    if(!fs.existsSync(python))throw Error('No Pocket environment in '+home+' / 未找到此目录的 Pocket 环境');
+    run(python,['-m','backend.service_control','stop',home],{cwd:root,env:{...process.env,PYTHONUTF8:'1'}});return;
+  }
   fs.mkdirSync(home,{recursive:true,mode:0o700});
   const configFile=path.join(home,'config.json');
   if(!fs.existsSync(configFile)&&!o.comfyDir&&!o.comfyUrl&&process.stdin.isTTY){
@@ -47,7 +53,15 @@ async function main(){
   if(o.setupOnly)return;
   if(!fs.existsSync(path.join(root,'web/dist/index.html')))throw Error('Frontend build missing. Use a release package, or run npm run build.');
   const url=`http://127.0.0.1:${config.port}`;
-  try{const r=await fetch(url+'/api/session',{signal:AbortSignal.timeout(1000)});if(r.ok&&(await r.json()).product==='comfy-pocket'){console.log('Already running / 已在运行: '+url);if(o.open)openBrowser(url);return;}}catch{}
+  const showAccess=async()=>{
+    await printAccessSummary(config,configFile,os.networkInterfaces());
+    console.log('\n关闭 / Stop: Ctrl+C');
+    const quotedHome="'"+(win?home.replaceAll("'","''"):home.replaceAll("'","'\\''"))+"'";
+    console.log('其他终端 / From another terminal: npx comfy-pocket stop --home '+quotedHome);
+    console.log('默认不随开机启动；关机后需重新运行 / No automatic startup; run again after reboot.');
+    console.log('开机启动 / Startup guide: https://github.com/SquirrelSong5/comfy-pocket/blob/main/docs/guide.zh-CN.md#开机启动可选');
+  };
+  try{const r=await fetch(url+'/api/session',{signal:AbortSignal.timeout(1000)});if(r.ok&&(await r.json()).product==='comfy-pocket'){console.log('Already running / 已在运行: '+url);await showAccess();if(o.open)openBrowser(url);return;}}catch{}
   console.log('Starting / 启动: '+url+'\nCtrl+C stops Pocket only. / 保持终端打开，Ctrl+C 仅停止轻量服务。');
   const child=spawn(servicePython,['-m','backend.server'],{cwd:root,env:{...process.env,COMFY_POCKET_HOME:home},stdio:'inherit',windowsHide:true});
   let stopping=false;
@@ -67,7 +81,7 @@ except psutil.Error:pass
     spawnSync(servicePython,['-c',cleanup,String(child.pid),root],{windowsHide:true,stdio:'ignore'});
   };process.on('SIGINT',stop);process.on('SIGTERM',stop);
   child.on('error',e=>{console.error(e.message);process.exitCode=1;});
-  let opened=false;const timer=setInterval(async()=>{try{const r=await fetch(url+'/api/session',{signal:AbortSignal.timeout(1000)});if(r.ok&&(await r.json()).product==='comfy-pocket'&&!opened){opened=true;clearInterval(timer);console.log('Ready / 已就绪: '+url);if(o.open)openBrowser(url);}}catch{}},500);
+  let opened=false;const timer=setInterval(async()=>{try{const r=await fetch(url+'/api/session',{signal:AbortSignal.timeout(1000)});if(r.ok&&(await r.json()).product==='comfy-pocket'&&!opened){opened=true;clearInterval(timer);console.log('Ready / 已就绪: '+url);await showAccess();if(o.open)openBrowser(url);}}catch{}},500);
   child.on('exit',code=>{clearInterval(timer);process.exitCode=code||0;});
 }
 main().catch(e=>{console.error('\n'+e.message);process.exitCode=1;});

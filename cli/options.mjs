@@ -6,7 +6,8 @@ export function parseArgs(argv) {
   const names={'--home':'home','--python':'python','--comfy-dir':'comfyDir','--comfy-url':'comfyUrl','--port':'port'};
   for(let i=0;i<argv.length;i++){
     const a=argv[i];
-    if(a==='--no-open')o.open=false;
+    if((a==='start'||a==='stop')&&i===0)o.command=a;
+    else if(a==='--no-open')o.open=false;
     else if(a==='--setup-only')o.setupOnly=true;
     else if(a==='--help'||a==='-h')o.help=true;
     else if(a==='--host'){
@@ -17,6 +18,7 @@ export function parseArgs(argv) {
   }
   if(o.port!==undefined){o.port=Number(o.port);if(!Number.isInteger(o.port)||o.port<1024||o.port>65535)throw Error('--port must be an integer from 1024 to 65535');}
   if(o.comfyUrl){const u=new URL(o.comfyUrl);if(!['http:','https:'].includes(u.protocol)||u.username||u.password||u.search||u.hash||u.pathname!=='/')throw Error('--comfy-url must be an HTTP(S) origin without credentials');o.comfyUrl=u.origin;}
+  if(o.command==='stop'&&(o.setupOnly||o.python||o.comfyDir||o.comfyUrl||o.port!==undefined||o.hosts.length))throw Error('stop only accepts --home, --no-open, and --help');
   return o;
 }
 
