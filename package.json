@@ -1,6 +1,6 @@
 {
   "name": "comfy-pocket",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A lightweight, mobile-friendly app runner for your ComfyUI backend",
   "type": "module",
   "bin": {
@@ -26,6 +26,7 @@
     "README.md",
     "README.en.md",
     "docs/screenshots/*.png",
+    "docs/guide.*.md",
     "LICENSE",
     "THIRD_PARTY_NOTICES.md",
     "THIRD_PARTY_LICENSES.txt"
@@ -33,6 +34,6 @@
   "scripts": {
     "build": "node scripts/build-package.mjs",
     "prepare": "node scripts/build-package.mjs",
-    "test": "node --test tests/launcher.test.mjs"
+    "test": "node --test tests/*.test.mjs"
   }
 }
