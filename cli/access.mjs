@@ -1,4 +1,5 @@
 import { isIP } from 'node:net';
+import { terminal as t } from './terminal.mjs';
 
 function privateKind(host) {
   if (isIP(host) !== 4) return null;
@@ -29,16 +30,25 @@ export function getAccessCandidates(config, interfaces) {
 }
 
 export function formatAccessSummary(candidates, readyHosts, configFile, port) {
-  const lines=['\n访问地址 / Access addresses'];
+  const lines=['\n  '+t.title('访问地址 / Access addresses'),''];
   for (const {host,label,configured} of candidates) {
     const status = !configured ? '未开放 / Not enabled' : readyHosts.has(host) ? '本机探测成功 / Reachable locally' : '未就绪 / Not ready';
-    lines.push(`  ${label}: http://${host}:${port}  [${status}]`);
+    const color = configured && readyHosts.has(host) ? t.success : t.warning;
+    lines.push(`  ${label}  ${color(`[${status}]`)}`,
+      `    ${t.link(`http://${host}:${port}`)}`, '');
   }
-  if (!candidates.some(c => c.label === 'Tailscale')) lines.push('  未检测到 Tailscale 网卡 / No Tailscale interface detected.');
-  if (candidates.some(c => !c.configured)) lines.push(`启用地址：编辑 ${configFile} 中的 bind、hosts、networks，然后重启。\nTo enable an address, edit bind, hosts and networks in that file, then restart.`);
-  lines.push('手机需在同一局域网或连接 Tailscale；访问码在本机页面「手机访问」查看。',
-    'Use the same LAN or Tailscale. Find the access code under Phone access on the local page.',
-    '本机探测成功不代表已通过远端防火墙检查 / Local checks do not verify remote firewall access.');
+  if (!candidates.some(c => c.label === 'Tailscale')) lines.push('  '+t.muted('未检测到 Tailscale 网卡 / No Tailscale interface detected.'),'');
+  if (candidates.some(c => !c.configured)) lines.push(
+    '  '+t.title('启用远程访问 / Enable remote access'), '',
+    '  编辑下方配置中的 bind、hosts、networks，然后重启。',
+    '  '+t.muted('Edit bind, hosts and networks in this file, then restart.'),
+    '    '+t.command(configFile),'');
+  lines.push('  '+t.title('手机访问 / Phone access'), '',
+    '  手机需在同一局域网或连接 Tailscale；',
+    '  访问码在本机页面「手机访问」查看。',
+    '  '+t.muted('Use the same LAN or Tailscale. Find the code under Phone access.'), '',
+    '  '+t.muted('本机探测成功不代表手机已连通。'),
+    '  '+t.muted('Local checks do not verify remote firewall access.'));
   return lines.join('\n');
 }
 

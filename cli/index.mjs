@@ -7,6 +7,7 @@ import { spawn,spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { parseArgs,makeConfig } from './options.mjs';
 import { printAccessSummary } from './access.mjs';
+import { terminal as t } from './terminal.mjs';
 const root=path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const win=process.platform==='win32';
 function run(command,args,opts={}){const r=spawnSync(command,args,{stdio:'inherit',windowsHide:true,...opts});if(r.error||r.status!==0)throw Error(`${command} failed. ${r.error?.message||'See output above.'}`);}
@@ -49,20 +50,24 @@ async function main(){
     if(o.comfyDir&&!fs.existsSync(path.join(o.comfyDir,'main.py')))throw Error('--comfy-dir must contain main.py / 请选择包含 main.py 的目录');
     config=makeConfig({...o,python});config.python=servicePython;fs.writeFileSync(configFile,JSON.stringify(config,null,2),{mode:0o600});
   }else if(o.port!==undefined||o.hosts.length||o.comfyDir||o.comfyUrl)console.log('Using saved config; edit '+configFile+' to change server settings. / 已复用现有配置。');
-  console.log('Config / 配置: '+configFile);
+  console.log('\n  '+t.title('Comfy Pocket')+'\n\n  '+t.muted('配置 / Config')+'\n    '+configFile+'\n');
   if(o.setupOnly)return;
   if(!fs.existsSync(path.join(root,'web/dist/index.html')))throw Error('Frontend build missing. Use a release package, or run npm run build.');
   const url=`http://127.0.0.1:${config.port}`;
-  const showAccess=async()=>{
+  const showAccess=async(alreadyRunning=false)=>{
     await printAccessSummary(config,configFile,os.networkInterfaces());
-    console.log('\n关闭 / Stop: Ctrl+C');
+    console.log('\n  '+t.title('关闭 / Stop')+'\n');
+    console.log('  '+(alreadyRunning?'在原启动终端按 Ctrl+C，或执行下方命令。':'在当前终端按 Ctrl+C，或在其他终端执行：'));
+    console.log('  '+t.muted(alreadyRunning?'Press Ctrl+C in the original terminal, or run:':'Press Ctrl+C here, or run in another terminal:'));
     const quotedHome="'"+(win?home.replaceAll("'","''"):home.replaceAll("'","'\\''"))+"'";
-    console.log('其他终端 / From another terminal: npx comfy-pocket stop --home '+quotedHome);
-    console.log('默认不随开机启动；关机后需重新运行 / No automatic startup; run again after reboot.');
-    console.log('开机启动 / Startup guide: https://github.com/SquirrelSong5/comfy-pocket/blob/main/docs/guide.zh-CN.md#开机启动可选');
+    console.log('\n    '+t.command('npx comfy-pocket stop --home '+quotedHome));
+    console.log('\n  '+t.title('下次启动 / Next time')+'\n');
+    console.log('  默认不随开机启动；关机后需重新运行。');
+    console.log('  '+t.muted('No automatic startup; run again after reboot.'));
+    console.log('\n  开机启动设置 / Startup guide\n    '+t.link('https://github.com/SquirrelSong5/comfy-pocket/blob/main/docs/guide.zh-CN.md#开机启动可选')+'\n');
   };
-  try{const r=await fetch(url+'/api/session',{signal:AbortSignal.timeout(1000)});if(r.ok&&(await r.json()).product==='comfy-pocket'){console.log('Already running / 已在运行: '+url);await showAccess();if(o.open)openBrowser(url);return;}}catch{}
-  console.log('Starting / 启动: '+url+'\nCtrl+C stops Pocket only. / 保持终端打开，Ctrl+C 仅停止轻量服务。');
+  try{const r=await fetch(url+'/api/session',{signal:AbortSignal.timeout(1000)});if(r.ok&&(await r.json()).product==='comfy-pocket'){console.log('  '+t.success('已在运行 / Already running'));await showAccess(true);if(o.open)openBrowser(url);return;}}catch{}
+  console.log('  '+t.warning('正在启动 / Starting…')+'\n  '+t.muted('保持终端打开 / Keep this terminal open.'));
   const child=spawn(servicePython,['-m','backend.server'],{cwd:root,env:{...process.env,COMFY_POCKET_HOME:home},stdio:'inherit',windowsHide:true});
   let stopping=false;
   const stop=()=>{
@@ -81,7 +86,7 @@ except psutil.Error:pass
     spawnSync(servicePython,['-c',cleanup,String(child.pid),root],{windowsHide:true,stdio:'ignore'});
   };process.on('SIGINT',stop);process.on('SIGTERM',stop);
   child.on('error',e=>{console.error(e.message);process.exitCode=1;});
-  let opened=false;const timer=setInterval(async()=>{try{const r=await fetch(url+'/api/session',{signal:AbortSignal.timeout(1000)});if(r.ok&&(await r.json()).product==='comfy-pocket'&&!opened){opened=true;clearInterval(timer);console.log('Ready / 已就绪: '+url);await showAccess();if(o.open)openBrowser(url);}}catch{}},500);
+  let opened=false;const timer=setInterval(async()=>{try{const r=await fetch(url+'/api/session',{signal:AbortSignal.timeout(1000)});if(r.ok&&(await r.json()).product==='comfy-pocket'&&!opened){opened=true;clearInterval(timer);console.log('\n  '+t.success('已就绪 / Ready'));await showAccess();if(o.open)openBrowser(url);}}catch{}},500);
   child.on('exit',code=>{clearInterval(timer);process.exitCode=code||0;});
 }
 main().catch(e=>{console.error('\n'+e.message);process.exitCode=1;});
