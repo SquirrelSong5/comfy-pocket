@@ -1,6 +1,6 @@
 {
   "name": "comfy-pocket",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A lightweight, mobile-friendly app runner for your ComfyUI backend",
   "type": "module",
   "bin": {
