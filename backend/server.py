@@ -17,6 +17,7 @@ from .runtime import Runtime
 from .previews import make_preview
 from .progress import apply_event, record_text
 from .preferences import Preferences
+from .lora_triggers import TriggerLibrary, metadata_words, normalize_words
 from .security import sign_session, valid_session, local_client, allowed_client
 
 ROOT=pathlib.Path(__file__).resolve().parent.parent
@@ -35,6 +36,7 @@ def save_state(name,data):
     path=STATE/name;temp=path.with_suffix('.tmp');temp.write_text(json.dumps(data,ensure_ascii=False),encoding='utf-8');temp.replace(path)
 JOBS=load_state('jobs.json');UPLOADS=load_state('uploads.json')
 PREFERENCES=Preferences(STATE/'preferences.json')
+TRIGGERS=TriggerLibrary(STATE/'lora-triggers.json')
 CATALOG={};APP_ERRORS=[];STAMP={};INFO={};LAST_REFRESH=0
 LOCK=asyncio.Lock();SUBMIT_LOCK=asyncio.Lock();CLIENT=None
 ATTEMPTS={}
@@ -126,6 +128,37 @@ async def preferences(request):
     try:PREFERENCES.update(app,body.get('values'),body.get('reset',False))
     except OSError as e:raise ValueError('无法保存参数到电脑，请检查存储空间或文件权限') from e
     return response(PREFERENCES.snapshot(CATALOG))
+
+async def loras(request):
+    names=await upstream('/models/loras')
+    return response({'names':names})
+
+async def lora_triggers(request):
+    body=await request.json() if request.method=='POST' else request.query
+    if not isinstance(body,(dict,)) and request.method=='POST':raise ValueError('词库格式不正确')
+    name=body.get('name')
+    names=await upstream('/models/loras')
+    if not isinstance(name,str) or name not in names:raise ValueError('LoRA 不存在，请刷新模型列表')
+    if request.method=='POST':
+        if set(body)-{'name','words','reset'} or type(body.get('reset',False)) is not bool or ('words' not in body and not body.get('reset')) or (body.get('reset') and 'words' in body):raise ValueError('词库格式不正确')
+        try:TRIGGERS.update(name,None if body.get('reset') else body['words'])
+        except OSError as e:raise ValueError('词库未保存，请检查电脑存储空间或文件权限') from e
+    saved=TRIGGERS.get(name)
+    if saved is not None:return response({'name':name,'words':saved,'source':'manual'})
+    query=urllib.parse.urlencode({'name':name})
+    # LoRA Manager is optional. Its absence must not prevent using Pocket.
+    async with CLIENT.get(CONF['comfy_url']+'/api/lm/loras/get-trigger-words?'+query) as r:
+        if r.status==200:
+            try:data=await r.json();words=normalize_words(data.get('trigger_words'))
+            except (ValueError,TypeError,AttributeError):words=[]
+            if words:return response({'name':name,'words':words,'source':'manager'})
+    query=urllib.parse.urlencode({'filename':name})
+    async with CLIENT.get(CONF['comfy_url']+'/view_metadata/loras?'+query) as r:
+        if r.status==200:
+            try:words=metadata_words(await r.json())
+            except (ValueError,TypeError):words=[]
+            if words:return response({'name':name,'words':words,'source':'metadata'})
+    return response({'name':name,'words':[],'source':'none'})
 
 async def upload(request):
     reader=await request.multipart();part=await reader.next()
@@ -293,7 +326,7 @@ async def start():
     CLIENT=ClientSession(timeout=ClientTimeout(total=90),trust_env=False)
     RUNTIME=Runtime(CONF,STATE,CLIENT)
     app=web.Application(middlewares=[guard],client_max_size=21*1024*1024)
-    app.add_routes([web.get('/api/runtime',runtime_status),web.post('/api/runtime',runtime_action),web.get('/api/session',session),web.post('/api/login',login),web.get('/api/access-code',access_code),web.get('/api/apps',apps),web.get('/api/preferences',preferences),web.post('/api/preferences',preferences),web.post('/api/upload',upload),web.post('/api/jobs',submit),web.get('/api/jobs',jobs),web.get('/api/events',events),web.post('/api/jobs/{ident}/cancel',cancel),web.get('/api/media/{ident}/{index}',media),web.get('/',index)])
+    app.add_routes([web.get('/api/runtime',runtime_status),web.post('/api/runtime',runtime_action),web.get('/api/session',session),web.post('/api/login',login),web.get('/api/access-code',access_code),web.get('/api/apps',apps),web.get('/api/preferences',preferences),web.post('/api/preferences',preferences),web.get('/api/loras',loras),web.get('/api/lora-triggers',lora_triggers),web.post('/api/lora-triggers',lora_triggers),web.post('/api/upload',upload),web.post('/api/jobs',submit),web.get('/api/jobs',jobs),web.get('/api/events',events),web.post('/api/jobs/{ident}/cancel',cancel),web.get('/api/media/{ident}/{index}',media),web.get('/',index)])
     app.router.add_static('/assets/',ROOT/'web/dist/assets',show_index=False)
     runner=web.AppRunner(app,access_log=None);await runner.setup()
     progress_task=asyncio.create_task(listen_progress())

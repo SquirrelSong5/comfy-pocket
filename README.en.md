@@ -35,6 +35,14 @@ For example, a workflow with dozens of nodes might expose just a prompt, an aspe
 
 “Sync official apps” reads saved `.app.json` files and their input/output configuration from the connected ComfyUI instance, then builds Pocket's own controls. It does not automatically turn ordinary workflow `.json` files into apps. Build and save the app in ComfyUI first, then sync it in Pocket.
 
+## LoRA selection and trigger words
+
+When an app exposes both the model selector and strength of a `LoraLoaderModelOnly` node, Pocket offers multiple selection with collapsible folders and a separate root group. Select up to eight models and adjust each strength independently. A strength of zero disables loading that model.
+
+The trigger-word section below the prompt shows only enabled models. Click a word to append it to the prompt. Pocket reads explicit trigger words from LoRA Manager or model metadata; missing words stay blank and can be added manually in the library editor. Selections, strengths, and libraries are saved on the computer and shared by devices connected to the same Pocket service.
+
+This feature does not download models or determine base-model compatibility. Choose LoRAs that match your base model.
+
 ## Quick start
 
 You need a working **ComfyUI** installation, **Node.js 22.12+**, and **Python 3.10+** with `venv` and `pip`.

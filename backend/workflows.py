@@ -87,6 +87,15 @@ def compile_app(path, workflow, object_info):
         if name in ('seed','noise_seed'):f.update(default=-1,min=-1,max=4294967295,random_seed=True)
         f.update({k:v for k,v in overrides.get(key,{}).items() if k in ('label','advanced','min','max','step','default')})
         fields.append(f)
+    # Replace an explicitly exposed model-only LoRA selector + strength with a stack.
+    # Hidden and fixed workflow LoRAs retain their existing behavior.
+    for ident,node in graph.items():
+        if node['class_type']!='LoraLoaderModelOnly':continue
+        name_field=next((f for f in fields if f['key']==ident+'.lora_name'),None)
+        strength_field=next((f for f in fields if f['key']==ident+'.strength_model'),None)
+        if not name_field or not strength_field:continue
+        stack=dict(key=ident+'.loras',label='LoRA',kind='lora_multi',node=ident,widget='loras',options=name_field['options'],min=strength_field.get('min',-2),max=strength_field.get('max',2),advanced=False,default=[{'name':name_field['default'],'strength':strength_field['default']}] if strength_field['default'] else [])
+        index=fields.index(name_field);fields.remove(name_field);fields.remove(strength_field);fields.insert(index,stack)
     groups=meta.get('imageGroups',[]);fieldmap={f['key']:f for f in fields}
     for g in groups:
         if not g.get('fields') or any(k not in fieldmap or fieldmap[k]['kind']!='image' for k in g['fields']):raise ValueError('图片分组配置无效')
@@ -121,6 +130,12 @@ def build_prompt(a, values, images):
             if not isinstance(v,str) or len(v)>12000:raise ValueError('文本参数最多 12000 字符')
         elif kind=='bool':
             if type(v) is not bool:raise ValueError(f"{f['label']} 必须为开关值")
+        elif kind=='lora_multi':
+            from .preferences import valid_value
+            if not valid_value(f,v):raise ValueError('LoRA 选择无效，最多启用 8 个，请检查模型和强度')
+            normalized[key]=copy.deepcopy(v)
+            apply_lora_stack(p,f['node'],v)
+            continue
         elif kind=='select':
             if v not in f['options']:raise ValueError(f"{f['label']} 选项无效")
         else:
@@ -132,3 +147,17 @@ def build_prompt(a, values, images):
         if f.get('random_seed') and v==-1:v=secrets.randbelow(4294967296)
         p[f['node']]['inputs'][f['widget']]=v
     return p,normalized
+
+
+def apply_lora_stack(graph,ident,choices):
+    source=graph[ident]['inputs']['model']
+    consumers=[(node,widget) for node,data in graph.items() for widget,value in data['inputs'].items() if value==[ident,0]]
+    del graph[ident]
+    current=source
+    for index,item in enumerate(choices):
+        if item['strength']==0:continue
+        node_id=f'{ident}_pocket_lora_{index}'
+        while node_id in graph:node_id+='_'  # avoid collisions with exported node IDs
+        graph[node_id]={'class_type':'LoraLoaderModelOnly','inputs':{'model':current,'lora_name':item['name'],'strength_model':item['strength']},'_meta':{'title':'LoRA: '+item['name']}}
+        current=[node_id,0]
+    for node,widget in consumers:graph[node]['inputs'][widget]=current

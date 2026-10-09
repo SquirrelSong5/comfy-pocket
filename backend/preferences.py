@@ -9,6 +9,15 @@ def valid_value(field, value):
     kind=field['kind']
     if kind=='text':return isinstance(value,str) and len(value)<=12000
     if kind=='bool':return type(value) is bool
+    if kind=='lora_multi':
+        if not isinstance(value,list) or len(value)>8:return False
+        names=set()
+        for item in value:
+            if not isinstance(item,dict) or set(item)!={'name','strength'}:return False
+            name=item['name'];strength=item['strength']
+            if not isinstance(name,str) or name not in field['options'] or name in names or type(strength) not in (int,float) or not math.isfinite(strength) or not field.get('min',-2)<=strength<=field.get('max',2):return False
+            names.add(name)
+        return True
     if kind=='select':return any(type(value) is type(option) and value==option for option in field['options'])
     if kind not in ('int','float') or type(value) not in (int,float):return False
     return math.isfinite(value) and (kind!='int' or value==int(value)) and field.get('min',-math.inf)<=value<=field.get('max',math.inf)
