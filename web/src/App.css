@@ -11,3 +11,5 @@
 .runtime-panel{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px}.runtime-panel strong{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:550}.runtime-panel strong>svg{width:15px;height:15px;color:var(--primary)}.runtime-panel p{font-size:11px;line-height:1.7;color:var(--muted-foreground);margin-top:7px;overflow-wrap:anywhere}.runtime-actions{display:flex;gap:8px;flex:none}@media(max-width:760px){.runtime-panel{align-items:flex-start;flex-direction:column;gap:12px}.runtime-actions{width:100%}.runtime-actions [data-slot=button]{flex:1;height:40px}}
 
 .original-link{flex:none;color:var(--primary);text-decoration:underline;text-underline-offset:3px}
+
+.parameter-storage{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}.parameter-storage p{font-size:11px;color:var(--muted-foreground)}.parameter-storage .storage-error{color:var(--destructive)}.parameter-storage [data-slot=button]{flex:none;font-size:11px}

@@ -27,6 +27,8 @@ Choose a saved app from the sidebar. Its inputs appear in the middle, with the l
 
 “运行记录” (History) opens jobs submitted through Pocket. “同步官方应用” (Sync official apps) refreshes apps after you add or change them in ComfyUI. History does not import every job submitted from other ComfyUI clients.
 
+Changed parameters are saved per app on the Pocket computer in `state/preferences.json`. Wait for the saved status before leaving the page. Phones and different browsers connecting to that computer share prompts, models, sizes, steps, seeds, switches, and the last selected app. Reference images need to be uploaded again. “恢复默认参数” (Restore defaults) resets only the current app. Parameters that become invalid after a workflow update fall back to the new defaults.
+
 ### On a phone: choose an app, enter inputs, scroll to the result
 
 <p>

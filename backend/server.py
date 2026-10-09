@@ -16,6 +16,7 @@ from .workflows import compile_app, public_app, build_prompt
 from .runtime import Runtime
 from .previews import make_preview
 from .progress import apply_event, record_text
+from .preferences import Preferences
 from .security import sign_session, valid_session, local_client, allowed_client
 
 ROOT=pathlib.Path(__file__).resolve().parent.parent
@@ -33,6 +34,7 @@ def load_state(name):
 def save_state(name,data):
     path=STATE/name;temp=path.with_suffix('.tmp');temp.write_text(json.dumps(data,ensure_ascii=False),encoding='utf-8');temp.replace(path)
 JOBS=load_state('jobs.json');UPLOADS=load_state('uploads.json')
+PREFERENCES=Preferences(STATE/'preferences.json')
 CATALOG={};APP_ERRORS=[];STAMP={};INFO={};LAST_REFRESH=0
 LOCK=asyncio.Lock();SUBMIT_LOCK=asyncio.Lock();CLIENT=None
 ATTEMPTS={}
@@ -111,6 +113,19 @@ async def access_code(request):
 async def apps(request):
     if (await RUNTIME.status())['online']:await refresh(request.query.get('refresh')=='1')
     return response({'apps':[public_app(a) for a in CATALOG.values()],'unsupported':APP_ERRORS})
+
+async def preferences(request):
+    if request.method=='GET':return response(PREFERENCES.snapshot(CATALOG))
+    body=await request.json()
+    if not isinstance(body,dict) or set(body)-{'app','values','reset'} or type(body.get('reset',False)) is not bool:raise ValueError('参数保存格式不正确')
+    ident=body.get('app')
+    if not isinstance(ident,str):raise ValueError('应用不存在')
+    if not CATALOG:await refresh()
+    app=CATALOG.get(ident)
+    if not app:raise ValueError('应用不存在，请同步应用')
+    try:PREFERENCES.update(app,body.get('values'),body.get('reset',False))
+    except OSError as e:raise ValueError('无法保存参数到电脑，请检查存储空间或文件权限') from e
+    return response(PREFERENCES.snapshot(CATALOG))
 
 async def upload(request):
     reader=await request.multipart();part=await reader.next()
@@ -278,7 +293,7 @@ async def start():
     CLIENT=ClientSession(timeout=ClientTimeout(total=90),trust_env=False)
     RUNTIME=Runtime(CONF,STATE,CLIENT)
     app=web.Application(middlewares=[guard],client_max_size=21*1024*1024)
-    app.add_routes([web.get('/api/runtime',runtime_status),web.post('/api/runtime',runtime_action),web.get('/api/session',session),web.post('/api/login',login),web.get('/api/access-code',access_code),web.get('/api/apps',apps),web.post('/api/upload',upload),web.post('/api/jobs',submit),web.get('/api/jobs',jobs),web.get('/api/events',events),web.post('/api/jobs/{ident}/cancel',cancel),web.get('/api/media/{ident}/{index}',media),web.get('/',index)])
+    app.add_routes([web.get('/api/runtime',runtime_status),web.post('/api/runtime',runtime_action),web.get('/api/session',session),web.post('/api/login',login),web.get('/api/access-code',access_code),web.get('/api/apps',apps),web.get('/api/preferences',preferences),web.post('/api/preferences',preferences),web.post('/api/upload',upload),web.post('/api/jobs',submit),web.get('/api/jobs',jobs),web.get('/api/events',events),web.post('/api/jobs/{ident}/cancel',cancel),web.get('/api/media/{ident}/{index}',media),web.get('/',index)])
     app.router.add_static('/assets/',ROOT/'web/dist/assets',show_index=False)
     runner=web.AppRunner(app,access_log=None);await runner.setup()
     progress_task=asyncio.create_task(listen_progress())
