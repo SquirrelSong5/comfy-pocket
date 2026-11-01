@@ -92,6 +92,7 @@ npx --registry=https://registry.npmjs.org/ comfy-pocket
 | **生成进度** | 查看当前节点、执行步骤和排队状态，也可以取消任务。 |
 | **结果预览** | 图片先加载较小的 WebP 预览，原图单独下载；支持文本及视频、音频结果。 |
 | **运行记录** | 回看通过 Pocket 提交的任务和作品。 |
+| **电脑文件** | 在手机浏览已配置的 input / output 文件夹，进入子目录、筛选、预览和下载；也能看到官方界面生成的作品。 |
 | **进程控制** | 配置本机运行环境后，在网页中手动启停 ComfyUI，多个应用共用一个后端。 |
 
 提示词增强、多图编辑等能力由工作流提供。Pocket 读取你公开的参数，不附带模型，也不修改节点画布。
@@ -119,6 +120,7 @@ npx --registry=https://registry.npmjs.org/ comfy-pocket
 - [ComfyUI 进程管理](docs/guide.zh-CN.md#进程管理)
 - [兼容范围、可选图片与提示词预览](docs/guide.zh-CN.md#兼容范围)
 - [常见问题](docs/guide.zh-CN.md#常见问题) · [安全与隐私](docs/guide.zh-CN.md#安全与隐私)
+- [手机浏览 input / output 文件夹](docs/file-library.zh-CN.md)
 
 ## 开发与反馈
 

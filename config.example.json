@@ -4,5 +4,7 @@
   "bind": ["127.0.0.1"],
   "hosts": ["127.0.0.1", "localhost"],
   "networks": ["127.0.0.0/8"],
-  "runtime": null
+  "runtime": null,
+  "input_directory": null,
+  "output_directory": null
 }

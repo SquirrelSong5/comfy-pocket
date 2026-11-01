@@ -10,6 +10,7 @@ import secrets
 import time
 import urllib.parse
 import uuid
+import sys
 from aiohttp import web, ClientSession, ClientTimeout, FormData, WSMsgType
 from PIL import Image, UnidentifiedImageError
 from .workflows import compile_app, public_app, build_prompt
@@ -326,6 +327,8 @@ async def start():
     CLIENT=ClientSession(timeout=ClientTimeout(total=90),trust_env=False)
     RUNTIME=Runtime(CONF,STATE,CLIENT)
     app=web.Application(middlewares=[guard],client_max_size=21*1024*1024)
+    from .file_library import install as install_files
+    install_files(app,sys.modules[__name__])
     app.add_routes([web.get('/api/runtime',runtime_status),web.post('/api/runtime',runtime_action),web.get('/api/session',session),web.post('/api/login',login),web.get('/api/access-code',access_code),web.get('/api/apps',apps),web.get('/api/preferences',preferences),web.post('/api/preferences',preferences),web.get('/api/loras',loras),web.get('/api/lora-triggers',lora_triggers),web.post('/api/lora-triggers',lora_triggers),web.post('/api/upload',upload),web.post('/api/jobs',submit),web.get('/api/jobs',jobs),web.get('/api/events',events),web.post('/api/jobs/{ident}/cancel',cancel),web.get('/api/media/{ident}/{index}',media),web.get('/',index)])
     app.router.add_static('/assets/',ROOT/'web/dist/assets',show_index=False)
     runner=web.AppRunner(app,access_log=None);await runner.setup()
