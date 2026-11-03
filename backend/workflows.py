@@ -1,4 +1,5 @@
 """Dynamic adapter for official ComfyUI apps and live node definitions."""
+from .reference_video import PRECISION_KEY, with_reference_precision
 import copy
 import hashlib
 import math
@@ -103,7 +104,7 @@ def compile_app(path, workflow, object_info):
             if k and k not in fieldmap:raise ValueError('图片分组控制参数未公开')
     title=pathlib.PurePosixPath(path).name.removesuffix('.app.json').removesuffix('.json');parts=title.split(' · ',1)
     purpose='video' if any('Video' in graph[k]['class_type'] for k in outputs) else 'image'
-    return dict(id=hashlib.sha256(path.encode()).hexdigest()[:16],path=path,name=parts[-1],model=parts[0] if len(parts)>1 else '',title=title,purpose=purpose,description=meta.get('description',''),fields=fields,imageGroups=groups,graph=graph,revision=hashlib.sha256(repr(d).encode()).hexdigest()[:16])
+    return with_reference_precision(dict(id=hashlib.sha256(path.encode()).hexdigest()[:16],path=path,name=parts[-1],model=parts[0] if len(parts)>1 else '',title=title,purpose=purpose,description=meta.get('description',''),fields=fields,imageGroups=groups,graph=graph,revision=hashlib.sha256(repr(d).encode()).hexdigest()[:16]))
 
 def public_app(a):
     return {k:([{x:y for x,y in f.items() if x not in ('node','widget')} for f in v] if k=='fields' else v) for k,v in a.items() if k not in ('graph','path')}
@@ -145,7 +146,8 @@ def build_prompt(a, values, images):
             if kind=='int':v=int(v)
         normalized[key]=v
         if f.get('random_seed') and v==-1:v=secrets.randbelow(4294967296)
-        p[f['node']]['inputs'][f['widget']]=v
+        if key != PRECISION_KEY or not f.get('pocket_control'):
+            p[f['node']]['inputs'][f['widget']]=v
     return p,normalized
 
 

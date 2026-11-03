@@ -14,6 +14,7 @@ import sys
 from aiohttp import web, ClientSession, ClientTimeout, FormData, WSMsgType
 from PIL import Image, UnidentifiedImageError
 from .workflows import compile_app, public_app, build_prompt
+from .reference_video import resize_references
 from .runtime import Runtime
 from .previews import make_preview
 from .progress import apply_event, record_text
@@ -188,6 +189,7 @@ async def submit(request):
     if not isinstance(files,dict) or len(files)>32:raise ValueError('图片参数格式不正确')
     if any(not isinstance(v,str) or v not in UPLOADS for v in files.values()):raise ValueError('图片已失效，请重新上传')
     prompt,values=build_prompt(a,body.get('values',{}),{k:UPLOADS[v] for k,v in files.items()})
+    prompt=resize_references(prompt,values)
     async with SUBMIT_LOCK:
         await update_jobs()
         if sum(j['status'] in ('queued','running') for j in JOBS.values())>=8:raise ValueError('待处理任务已达 8 个，请等待完成')
