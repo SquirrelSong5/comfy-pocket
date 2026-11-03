@@ -27,6 +27,7 @@ class ReferenceVideo(unittest.TestCase):
         field = configured['fields'][1]
         self.assertEqual(field['key'], PRECISION_KEY)
         self.assertEqual(field['default'], DEFAULT_PRECISION)
+        self.assertEqual(PRECISIONS[field['default']], 512)
         self.assertEqual(with_reference_precision(configured), configured)
         self.assertEqual(len(app['fields']), 1)
         other = dict(graph={'a': {'class_type': 'OtherModel'}}, fields=[])

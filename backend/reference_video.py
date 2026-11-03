@@ -5,11 +5,11 @@ import copy
 PRECISION_KEY = 'pocket_reference_precision'
 PRECISIONS = {
     '省显存 · 短边上限 320': 320,
-    '均衡 · 短边上限 384（推荐）': 384,
+    '试跑 · 短边上限 384': 384,
     '精细 · 短边上限 512': 512,
     '原始参考 · 较高显存': None,
 }
-DEFAULT_PRECISION = '均衡 · 短边上限 384（推荐）'
+DEFAULT_PRECISION = '精细 · 短边上限 512'
 
 
 def with_reference_precision(app):
@@ -22,7 +22,7 @@ def with_reference_precision(app):
         field = dict(key=PRECISION_KEY, label='参考视频精度（不改变成片分辨率）',
                      kind='select', default=DEFAULT_PRECISION, options=list(PRECISIONS),
                      pocket_control=True,
-                     help='只缩小模型看的参考画面，保持比例、时长和声音。均衡档先试 3～5 秒；表情或手指细节不足再选精细。')
+                     help='只缩小模型看的参考画面，保持比例、时长和声音。默认 512 保留更多细节；384 / 320 用于试跑。原始参考表示 Pocket 不额外缩小，模型内部仍会调整尺寸。')
         index = next((i + 1 for i, f in enumerate(app['fields']) if f['key'] == 'videos'), len(app['fields']))
         app['fields'].insert(index, field)
     return app
